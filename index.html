@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, canTouch-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>合成大西瓜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body, #box {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #box {
+            border: 2px solid red;
+            box-sizing: border-box;
+            margin: auto;
+            position: relative;
+        }
+
+        #hr {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            width: calc(100% - 2px);
+            border: 1px grey dotted;
+            border-bottom: none;
+        }
+
+        .fruit {
+            border-radius: 50%;
+            border: 4px solid;
+            box-sizing: border-box;
+            position: absolute;
+        }
+
+        .fruit::after {
+            padding-top: 100%;
+            content: '';
+            display: block;
+        }
+
+        /*葡萄*/
+        .grape {
+            width: 20px;
+            border-color: purple;
+            background-color: mediumpurple;
+        }
+
+        /*樱桃*/
+        .cherry {
+            width: 30px;
+            border-color: darkred;
+            background-color: red;
+        }
+
+        /*橘子*/
+        .orange {
+            width: 35px;
+            border-color: orangered;
+            background-color: orange;
+        }
+
+        /*柠檬*/
+        .lemon {
+            width: 40px;
+            border-color: burlywood;
+            background-color: yellow;
+        }
+
+        /*猕猴桃*/
+        .kiwi {
+            width: 45px;
+            border-color: saddlebrown;
+            background-color: lawngreen;
+        }
+
+        /*西红柿*/
+        .tomato {
+            width: 50px;
+            border-color: red;
+            background-color: palevioletred;
+        }
+
+        /*桃子*/
+        .peach {
+            width: 55px;
+            border-color: hotpink;
+            background-color: pink;
+        }
+
+        /*菠萝*/
+        .pineapple {
+            width: 60px;
+            border-color: yellow;
+            background-color: sandybrown;
+        }
+
+        /*椰子*/
+        .coco {
+            width: 70px;
+            border-color: saddlebrown;
+            background-color: whitesmoke;
+        }
+
+        /*半个西瓜*/
+        .halfwatermelon {
+            width: 80px;
+            border-color: green;
+            background-color: red;
+        }
+
+        /*西瓜*/
+        .watermelon {
+            width: 80px;
+            border-color: green;
+            background-color: darkgreen;
+        }
+    </style>
+</head>
+<body>
+<div id="box">
+    <hr id="hr">
+    <!--    <div class="fruit grape"></div>-->
+</div>
+<script>
+    window.onload = function (){
+        const innerWidth = window.innerWidth - 2 * 2;
+        const innerHeight = window.innerHeight - 2 * 2;
+        const box = document.getElementById('box');
+        const fruitsMap = {
+            0: {width: 20, name: 'grape',},
+            10: {width: 30, name: 'cherry',},
+            28: {width: 35, name: 'orange',},
+            44: {width: 40, name: 'lemon',},
+            58: {width: 45, name: 'kiwi',},
+            70: {width: 50, name: 'tomato',},
+            80: {width: 55, name: 'peach',},
+            88: {width: 60, name: 'pineapple',},
+            94: {width: 70, name: 'coco',},
+            98: {width: 80, name: 'halfwatermelon',},
+            100: {width: 80, name: 'watermelon',},
+        };
+
+        //  创建水果
+        function fruitCreate(){
+            const fruit = document.createElement('div');
+            const {style} = fruit;
+            const randomValue = random(0, 70);
+            let prevKey = 0;
+            for (const key in fruitsMap) {
+                if (key > randomValue) {
+                    break;
+                }
+                prevKey = key;
+            }
+            const fruitType = fruitsMap[prevKey];
+            const x = (innerWidth / 2 - fruitType.width / 2) | 0;
+            const y = (50 - fruitType.width) | 0;
+            fruit.width = fruitType.width;
+            fruit.name = fruitType.name;
+            fruit.x = x;
+            fruit.y = y;
+            //  初始化
+            fruit.canTouch = true;
+            fruit.fruitType = fruitType;
+            fruit.classList.add('fruit');
+            fruit.classList.add(fruitType.name);
+            fruitPosition(fruit);
+            box.appendChild(fruit);
+        }
+
+        fruitCreate();
+
+        //  触摸的对象
+        let touchTarget = null;
+        window.addEventListener('touchstart', (e) => {
+            const {clientX} = e.targetTouches[0];
+            const {target} = e;
+            if (!target.canTouch) {
+                return;
+            }
+            // console.log(clientX);
+            // console.log(target.x);
+            touchTarget = target;
+            touchTarget.diffX = clientX - target.x;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!touchTarget || !touchTarget.canTouch) {
+                return;
+            }
+            const {clientX} = e.targetTouches[0];
+            const {diffX} = touchTarget;
+            touchTarget.x = clientX - diffX;
+            touchTarget.x = Math.max(0, touchTarget.x);
+            touchTarget.x = Math.min(touchTarget.x, innerWidth - touchTarget.width);
+            fruitPosition(touchTarget);
+        });
+        window.addEventListener('touchend', (e) => {
+            if (!touchTarget || !touchTarget.canTouch) {
+                return;
+            }
+            fruitDown(touchTarget);
+            touchTarget.canTouch = false;
+            touchTarget = null;
+        });
+
+        function fruitDown(fruit){
+            fruit.y += 10;
+            //  到底部了
+            if (fruit.y + fruit.width >= innerHeight) {
+                fruit.y = (innerHeight  - fruit.width) | 0;
+                fruitPosition(fruit);
+                //  新增
+                fruitCreate();
+                return;
+            }
+            fruitPosition(fruit);
+            window.requestAnimationFrame(() => {
+                fruitDown(fruit);
+            });
+        }
+
+        //  渲染位置
+        function fruitPosition(fruit){
+            fruit.style.transform = `translate(${fruit.x}px,${fruit.y}px)`;
+        }
+
+        function random(min, max){
+            return Math.random() * (max - min + 1) | 0 + min;
+        }
+    }
+</script>
+</body>
+</html>
